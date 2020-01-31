@@ -37,6 +37,7 @@ type root struct {
 
 	mu          sync.Mutex
 	recent      *recentDir
+	search      *searchDir
 	roots       *rootsDir
 	atDir       *atDir
 	versionsDir *versionsDir
@@ -49,7 +50,7 @@ var (
 )
 
 func (n *root) Attr(ctx context.Context, a *fuse.Attr) error {
-	a.Mode = os.ModeDir | 0700
+	a.Mode = os.ModeDir | 0755
 	a.Uid = uint32(os.Getuid())
 	a.Gid = uint32(os.Getgid())
 	return nil
@@ -61,6 +62,7 @@ func (n *root) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 		{Name: "tag"},
 		{Name: "date"},
 		{Name: "recent"},
+		{Name: "search"},
 		{Name: "roots"},
 		{Name: "at"},
 		{Name: "sha1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"},
@@ -76,6 +78,15 @@ func (n *root) getRecentDir() *recentDir {
 		n.recent = &recentDir{fs: n.fs}
 	}
 	return n.recent
+}
+
+func (n *root) getSearchDir() *searchDir {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	if n.search == nil {
+		n.search = &searchDir{fs: n.fs}
+	}
+	return n.search
 }
 
 func (n *root) getRootsDir() *rootsDir {
@@ -114,6 +125,8 @@ func (n *root) Lookup(ctx context.Context, name string) (fs.Node, error) {
 		return staticFileNode("Welcome to PerkeepFS.\n\nMore information is available in the pk-mount documentation.\n\nSee https://perkeep.org/cmd/pk-mount/ , or run 'go doc perkeep.org/cmd/pk-mount'.\n"), nil
 	case "recent":
 		return n.getRecentDir(), nil
+	case "search":
+		return n.getSearchDir(), nil
 	case "tag", "date":
 		return notImplementDirNode{}, nil
 	case "at":
