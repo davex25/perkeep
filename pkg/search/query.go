@@ -430,6 +430,9 @@ type FileConstraint struct {
 	// of its parent directory.
 	ParentDir *DirConstraint `json:"parentDir,omitempty"`
 
+	// For Videos:
+	IsVideo bool
+
 	// For images:
 	IsImage  bool                `json:"isImage,omitempty"`
 	EXIF     *EXIFConstraint     `json:"exif,omitempty"` // TODO: implement
@@ -1894,6 +1897,9 @@ func (c *FileConstraint) blobMatches(ctx context.Context, s *search, br blob.Ref
 		return false, err
 	}
 	if fs := c.FileSize; fs != nil && !fs.intMatches(fi.Size) {
+		return false, nil
+	}
+	if c.IsVideo && !strings.HasPrefix(fi.MIMEType, "video/") {
 		return false, nil
 	}
 	if c.IsImage && !strings.HasPrefix(fi.MIMEType, "image/") {

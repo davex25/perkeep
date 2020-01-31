@@ -113,6 +113,9 @@ func init() {
 	registerKeyword(newTitle())
 	registerKeyword(newRef())
 
+	// Video predicates
+	registerKeyword(newIsVideo())
+
 	// Image predicates
 	registerKeyword(newIsImage())
 	registerKeyword(newHeight())
@@ -440,6 +443,33 @@ func (r ref) Predicate(ctx context.Context, args []string) (*Constraint, error) 
 	return &Constraint{
 		BlobRefPrefix: args[0],
 	}, nil
+}
+
+// Video predicates
+type isVideo struct {
+	matchEqual
+}
+
+func newIsVideo() keyword {
+	return isVideo{"is:video"}
+}
+
+func (k isVideo) Description() string {
+	return "object is a video"
+}
+
+func (k isVideo) Predicate(ctx context.Context, args []string) (*Constraint, error) {
+	c := &Constraint{
+		Permanode: &PermanodeConstraint{
+			Attr: nodeattr.CamliContent,
+			ValueInSet: &Constraint{
+				File: &FileConstraint{
+					IsVideo: true,
+				},
+			},
+		},
+	}
+	return c, nil
 }
 
 // Image predicates
